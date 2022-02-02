@@ -1,4 +1,7 @@
-output "dc_nic" {
-    value       = aws_network_interface.dc_nic.id
-    description = "The ID of the NIC to be attached to the instance."
+output "dc_subnet" {
+    value = aws_subnet.dc_subnet
+}
+
+output "dc_sg" {
+    value = aws_security_group.allow_rdp
 }

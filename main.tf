@@ -17,6 +17,9 @@ resource "aws_instance" "dc" {
     instance_type   = "t3.medium"
     key_name        = aws_key_pair.dc_key.key_name
     associate_public_ip_address = true
+    subnet_id                   = module.networking.dc_subnet.id
+    private_ip                  = "10.250.10.5"
+    vpc_security_group_ids      = [module.networking.dc_sg.id]
     get_password_data           = true
     user_data                   = <<EOF
 <powershell>
@@ -30,10 +33,12 @@ Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
 # set NTP
 w32tm /config /manualpeerlist:169.254.169.123 /syncfromflags:manual /update
 
+$dsrmPassword = "${var.dsrm_password}" | ConvertTo-SecureString -AsPlainText -Force
+
 $params = @{
     domainName                          = "contoso.local"
     domainNetBIOSName                   = "CONTOSO"
-    safeModeAdministratorPassword       = "${var.dsrm_password}"
+    safeModeAdministratorPassword       = $dsrmPassword
     domainMode                          = "Win2012R2"
     forestMode                          = "Win2012R2"
     installDns                          = $true
@@ -42,16 +47,11 @@ $params = @{
     logPath                             = "C:\Windows\NTDS"
     sysvolPath                          = "C:\Windows\SYSVOL"
 }
-Install-ADDSForest @params
+Install-ADDSForest @params -confirm:$false
 
 Stop-Transcript
 </powershell>
 EOF
-    
-    network_interface {
-        network_interface_id    = module.networking.dc_nic
-        device_index            = 0
-    }
 
     tags = {
         Name = var.namespace

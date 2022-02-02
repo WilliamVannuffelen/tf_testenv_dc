@@ -76,13 +76,3 @@ resource "aws_security_group" "allow_rdp" {
         Name = var.namespace
     }
 }
-
-resource "aws_network_interface" "dc_nic" {
-    subnet_id   = aws_subnet.dc_subnet.id
-    private_ips = ["10.250.10.5"]
-    security_groups = [aws_security_group.allow_rdp.id]
-
-    tags = {
-        Name = var.namespace
-    }
-}
